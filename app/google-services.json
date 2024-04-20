@@ -1,0 +1,97 @@
+{
+  "project_info": {
+    "project_number": "1032431328671",
+    "project_id": "miapose-c1aff",
+    "storage_bucket": "miapose-c1aff.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032431328671:android:2275758def3f911cd271aa",
+        "android_client_info": {
+          "package_name": "com.group4.taskmanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1032431328671-7ktvvoesqv4ekpje0npe9j789s99djfl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXZr1Ve6BQoaJsr3Db46p_66AOOEycPyk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1032431328671-7ktvvoesqv4ekpje0npe9j789s99djfl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032431328671:android:f55ecd4b634439bad271aa",
+        "android_client_info": {
+          "package_name": "com.miapose.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1032431328671-7ktvvoesqv4ekpje0npe9j789s99djfl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXZr1Ve6BQoaJsr3Db46p_66AOOEycPyk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1032431328671-7ktvvoesqv4ekpje0npe9j789s99djfl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032431328671:android:67629c67c96244bfd271aa",
+        "android_client_info": {
+          "package_name": "com.moneypoint.beise.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1032431328671-7ktvvoesqv4ekpje0npe9j789s99djfl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXZr1Ve6BQoaJsr3Db46p_66AOOEycPyk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1032431328671-7ktvvoesqv4ekpje0npe9j789s99djfl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
