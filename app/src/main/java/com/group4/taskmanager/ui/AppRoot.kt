@@ -11,13 +11,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.BottomAppBar
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,18 +24,15 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,7 +49,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.firestore.firestoreSettings
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.group4.taskmanager.ui.screens.details.DetailsScreen
 import com.group4.taskmanager.ui.screens.home.HomeScreen
+import com.group4.taskmanager.ui.screens.home.Task
+import com.group4.taskmanager.ui.screens.home.TasksViewModel
+import kotlinx.coroutines.launch
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Date
 
 
 enum class TaskManagerScreen() {
@@ -68,6 +74,11 @@ enum class TaskManagerScreen() {
 fun AppScaffold(
     navController: NavHostController = rememberNavController()
 ) {
+    val vm = TasksViewModel()
+
+    LaunchedEffect(key1 = true) {
+        vm.fetchTasks()
+    }
 
 
 
@@ -75,6 +86,27 @@ fun AppScaffold(
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
     var showBottomSheet by remember { mutableStateOf(false) }
+
+    fun closeBottomSheet() {
+        scope.launch {
+            sheetState.hide()
+        }
+    }
+
+    fun completeTask(task: Task, completed: Boolean) {
+        val db = Firebase.firestore
+        db.collection("tasks").document(task.id)
+            .update("completed", completed)
+            .addOnSuccessListener {
+                Log.d(null, "DocumentSnapshot successfully updated!")
+                vm.fetchTasks()
+            }
+            .addOnFailureListener { e ->
+                Log.w(null, "Error updating document", e)
+            }
+    }
+
+
 
     Scaffold(
         topBar = {
@@ -86,12 +118,15 @@ fun AppScaffold(
                 title = {
                     Text(
                         text = "Task Manager",
-                        fontWeight = FontWeight.Bold,)
+                        fontWeight = FontWeight.Bold,
+                    )
                 },
                 actions = {
-                    IconButton(onClick = { /* do something */ }) {
+                    IconButton(onClick = {
+                        vm.fetchTasks()
+                    }) {
                         Icon(
-                            imageVector = Icons.Filled.Menu,
+                            imageVector = Icons.Filled.Refresh,
                             contentDescription = "Localized description"
                         )
                     }
@@ -108,6 +143,10 @@ fun AppScaffold(
         }
     ) { innerpadding ->
 
+
+
+
+
         if (showBottomSheet) {
             ModalBottomSheet(
                 onDismissRequest = {
@@ -116,19 +155,53 @@ fun AppScaffold(
                 sheetState = sheetState
             ) {
 
-                CreateTaskSheet()
+                CreateTaskSheet(
+                    closeBottomSheet = {
+                        showBottomSheet = false
+                    },
+                    fetchTasks = {
+                        vm.fetchTasks()
+                    }
+                )
 
             }
         }
         NavHost(
             navController = navController,
-            startDestination = TaskManagerScreen.Home.name,
+            startDestination = "home",
             modifier = Modifier.padding(innerpadding)
         ) {
-            composable(route = TaskManagerScreen.Home.name) {
+            composable(route = "home") {
 
                 val context = LocalContext.current
-                HomeScreen()
+                HomeScreen(
+                    tasks = vm.tasks,
+                    onTaskComplete = { task, completed ->
+                        completeTask(task, completed)
+                    },
+                    onOpenTaskDetails = {
+                        navController.navigate("taskdetails/${it.id}")
+                    }
+                )
+            }
+
+            composable(route = "taskdetails/{taskId}") { backStackEntry ->
+                val context = LocalContext.current
+                val taskId = backStackEntry.arguments?.getString("taskId")
+
+                var task = vm.tasks.find {
+                    it.id == taskId
+                } as Task
+
+                DetailsScreen(
+                    task = task,
+                    changeTaskStatus = { completed ->
+                        completeTask(task, completed)
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
 
@@ -143,11 +216,25 @@ data class FileObject(
 
 
 @Composable
-fun CreateTaskSheet() {
+fun CreateTaskSheet(
+    closeBottomSheet: () -> Unit,
+    fetchTasks: () -> Unit
+) {
     val context = LocalContext.current
+    val db = Firebase.firestore
+
+
+
+
+
+
+
+
     val contentResolver = context.contentResolver
+    var loading by rememberSaveable { mutableStateOf(false) }
     var text by rememberSaveable { mutableStateOf("") }
-    var startDate by rememberSaveable { mutableStateOf("") }
+    var description by rememberSaveable { mutableStateOf("") }
+    var startDate by rememberSaveable { mutableStateOf(Date()) }
     var endDate by rememberSaveable { mutableStateOf("") }
     var files by rememberSaveable { mutableStateOf(mutableListOf<FileObject>()) }
     var fileName by rememberSaveable {
@@ -182,6 +269,50 @@ fun CreateTaskSheet() {
 
     }
 
+    fun createTask() {
+        Log.d(null, "Creating Task")
+
+        val dateFormat = SimpleDateFormat("yyyy/MM/dd")
+        val sd = dateFormat.parse(endDate)
+        //val endDateTimeStamp = DateFormat.getDateInstance().parse(endDate)?.time
+        Log.d(null, "End Date: $sd")
+        loading = true
+
+        // Create a new task with a document ID
+        val task = hashMapOf(
+            "name" to text,
+            "startdate" to startDate,
+            "completed" to false,
+            "description" to description,
+            "duedate" to sd,
+            "subtasks" to subTasks,
+            "files" to files.map {
+                hashMapOf(
+                    "name" to it.name,
+                    "fileurl" to it.fileUrl.toString()
+                )
+            }
+        )
+
+        // Add a new document with a generated ID
+        db.collection("tasks")
+            .add(task)
+            .addOnSuccessListener { documentReference ->
+                Log.d(null, "DocumentSnapshot added with ID: ${documentReference.id}")
+            }
+            .addOnFailureListener { e ->
+                Log.w(null, "Error adding document", e)
+            }
+            .addOnCompleteListener {
+                loading = false
+                fetchTasks()
+                closeBottomSheet()
+            }
+
+
+    }
+
+
     Column(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
@@ -202,8 +333,14 @@ fun CreateTaskSheet() {
             )
             Button(
                 modifier = Modifier.padding(16.dp),
-                onClick = { /*TODO*/ }) {
-                Text("Create Task")
+                onClick = {
+                    createTask()
+                }) {
+                if (loading) {
+                    Text("Loading...")
+                } else  {
+                    Text("Create Task")
+                }
 
             }
         }
@@ -219,21 +356,28 @@ fun CreateTaskSheet() {
                 supportingText = { Text("Enter the task name") }
             )
 
-
             TextField(
-                value = startDate,
-                onValueChange = { startDate = it },
-                label = { Text("Start Date") },
+                value = description,
+                onValueChange = { description = it },
+                label = { Text("Note") },
                 modifier = Modifier.padding(16.dp),
-                supportingText = { Text("Enter the start date") }
+                supportingText = { Text("Add a note") }
             )
+
+
+
 
             TextField(
                 value = endDate,
-                onValueChange = { endDate = it },
-                label = { Text("End Date") },
+                onValueChange = {
+                    endDate = it
+
+                                },
+                label = { Text("Due Date") },
                 modifier = Modifier.padding(16.dp),
-                supportingText = { Text("Enter the end date") }
+                supportingText = { Text("Enter the Due date") },
+                placeholder = { Text("yyyy/MM/dd") }
+
             )
 
             HorizontalDivider()
