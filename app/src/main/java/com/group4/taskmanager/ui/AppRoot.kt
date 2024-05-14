@@ -93,7 +93,18 @@ fun AppScaffold(
         }
     }
 
-   
+    fun completeTask(task: Task, completed: Boolean) {
+        val db = Firebase.firestore
+        db.collection("tasks").document(task.id)
+            .update("completed", completed)
+            .addOnSuccessListener {
+                Log.d(null, "DocumentSnapshot successfully updated!")
+                vm.fetchTasks()
+            }
+            .addOnFailureListener { e ->
+                Log.w(null, "Error updating document", e)
+            }
+    }
 
 
 
