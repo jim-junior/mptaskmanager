@@ -490,4 +490,8 @@ fun CreateTaskSheet(
 }
 
 
-
+@Preview(showBackground = true)
+@Composable
+fun AppScaffoldPreview() {
+    AppScaffold()
+}
